@@ -54,51 +54,45 @@ class SirenLibrary(nn.Module):
         
         self.voxel_width = 5
 
-    def inv_transform(self, y, vmax=1, eps=1e-5, sin_out=False, lib=np):
-        y0 = np.log10(eps)
-        y1 = np.log10(vmax + eps)
-
-        if sin_out:
-            y = (y+1)/2
-
-        power = np.power if lib == np else lib.pow
-        #x = 10 ** (y * (y1-y0) + y0) - eps
-        x = power(10., (y * (y1-y0) + y0)) - eps
-        return x
 
     def LoadData(self, transform=True, eps=1e-5):
         '''
         Load photon library visibility data. Apply scale transform if specified
         '''
-        pass
+        raise NotImplementedError
         #i dont think this is actually called anywhere
     
     def DataTransform(self, data, eps=1e-5):
         '''
         Transform vis data to log scale for training
         '''
-        pass
+        raise NotImplementedError
 
-    def DataTransformInv(self, data, eps=1e-5):
-        '''
-        Inverse log scale transform
-        '''
-        pass
+    @staticmethod
+    def DataTransformInv(data, vmax=1, eps=1e-5, sin_out=False, lib=np):
+        v0 = np.log10(eps)
+        v1 = np.log10(vmax + eps)
+
+        if sin_out:
+            data = (data+1)/2
+
+        power = np.power if lib == np else lib.pow
+        return power(10., (data * (v1 - v0) + v0)) - eps
 
     def LoadCoord(self, normalize=True, extend=False):
         '''
         Load input coord for training/evaluation
         '''
-        pass
+        raise NotImplementedError
 
     def CoordFromVoxID(self, idx, normalize=True):
         '''
         Load input coord from vox id 
         '''
-        pass
+        raise NotImplementedError
 
     def VisibilityFromAxisID(self, axis_id, ch=None):
-        pass
+        raise NotImplementedError
 
     def VisibilityFromXYZ(self, pos, ch=None):
         #used in flash_algo in "fill_estimate" method
@@ -134,7 +128,7 @@ class SirenLibrary(nn.Module):
     #     RETURN
     #       The voxel ID (single integer)          
     #     '''
-    #     pass
+    #     raise NotImplementedError
 
     def AxisID2Position(self, axis_id):
         '''
@@ -144,7 +138,7 @@ class SirenLibrary(nn.Module):
         RETURN
           Length 3 floating point array noting the position along xyz axis
         '''    
-        pass
+        raise NotImplementedError
 
     def Position2AxisID(self, pos):
         '''
@@ -154,7 +148,7 @@ class SirenLibrary(nn.Module):
         RETURN
           Tensor of sigle integer voxel IDs       
         '''
-        pass
+        raise NotImplementedError
 
     def Position2VoxID(self, pos):
         '''
@@ -164,7 +158,7 @@ class SirenLibrary(nn.Module):
         RETURN
           Tensor of sigle integer voxel IDs       
         '''
-        pass
+        raise NotImplementedError
 
     def VoxID2AxisID(self, vid):
         '''
@@ -174,7 +168,7 @@ class SirenLibrary(nn.Module):
         RETURN
           Length 3 integer array noting the position in discretized index along xyz axis
         '''
-        pass
+        raise NotImplementedError
 
     def VoxID2Coord(self, vid):
         '''
@@ -184,5 +178,5 @@ class SirenLibrary(nn.Module):
         RETURN
           Length 3 normalized coordinate array
         '''
-        pass
+        raise NotImplementedError
 
