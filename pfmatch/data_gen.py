@@ -32,9 +32,7 @@ class DataGen():
         self.posx_variation = gen_cfg['PosXVariation']
         self.truncate_tpc = gen_cfg["TruncateTPC"]
         self.num_tracks = gen_cfg["NumTracks"]
-
-        if 'NumpySeed' in gen_cfg:
-            np.random.seed(gen_cfg['NumpySeed'])
+        self.rng = np.random.default_rng(gen_cfg.get('NumpySeed'))
 
         #self.detector = detector_cfg
         self.plib = photon_lib
@@ -106,7 +104,7 @@ class DataGen():
 
         return result
 
-    def gen_trajectories(self, num_tracks):
+    def gen_trajectories(self, num_tracks, seed=123):
         """
         Generate N random trajectories.
         ---------
@@ -123,25 +121,26 @@ class DataGen():
         #load detector dimension 
         xmin, ymin, zmin = self.detector['ActiveVolumeMin']
         xmax, ymax, zmax = self.detector['ActiveVolumeMax']
+        between = lambda min, max: min + (max - min) * self.rng.random()  # noqa: E731
 
-        for i in range(num_tracks):
+        for _ in range(num_tracks):
             if self.track_algo=="random":
-                start_pt = [np.random.random() * (xmax - xmin) + xmin,
-                            np.random.random() * (ymax - ymin) + ymin,
-                            np.random.random() * (zmax - zmin) + zmin]
-                end_pt = [np.random.random() * (xmax - xmin) + xmin,
-                            np.random.random() * (ymax - ymin) + ymin,
-                            np.random.random() * (zmax - zmin) + zmin]
+                start_pt = [between(xmin, xmax),
+                            between(ymin, ymax),
+                            between(zmin, zmax)]
+                end_pt = [between(xmin, xmax),
+                          between(ymin, ymax),
+                          between(zmin, zmax)]
             elif self.track_algo=="top-bottom": 
             #probably dont need
-                start_pt = [np.random.random() * (xmax - xmin) + xmin,
+                start_pt = [between(xmin, xmax),
                             ymax,
-                            np.random.random() * (zmax - zmin) + zmin]
-                end_pt = [np.random.random() * (xmax - xmin) + xmin,
-                            ymin,
-                            np.random.random() * (zmax - zmin) + zmin]
+                            between(zmin, zmax)]
+                end_pt = [between(xmin, xmax),
+                          ymin,
+                          between(zmin, zmax)]
             else:
-                raise Exception("Track algo not recognized, must be one of ['random', 'top-bottom']")
+                raise ValueError("Track algo not recognized, must be one of ['random', 'top-bottom']")
             res.append([start_pt, end_pt])
 
         return res
@@ -165,13 +164,13 @@ class DataGen():
         for idx in range(n):
             t,x=0.,0.
             if self.time_algo == 'random':
-                t = np.random.random() * duration + self.periodPMT[0]
+                t = self.rng.random() * duration + self.periodPMT[0]
             elif self.time_algo == 'periodic':
                 t = (idx + 0.5) * duration / n + self.periodPMT[0]
             elif self.time_algo == 'same':
                 t = 0.
             else:
-                raise Exception("Time algo not recognized, must be one of ['random', 'periodic']")
+                raise ValueError("Time algo not recognized, must be one of ['random', 'periodic']")
             x = t * self.detector['DriftVelocity']
             time_dx_v.append((t,x))
         return time_dx_v
@@ -192,11 +191,13 @@ class DataGen():
         qcluster = self.qcluster_algo.make_qcluster_from_track(track)
         # apply variation if needed
         if self.ly_variation > 0:
-            var = abs(np.random.normal(1.0, self.ly_variation, len(qcluster)))
-            for idx in range(len(qcluster)): qcluster.qpt_v[idx][-1] *= var[idx]
+            var = abs(self.rng.normal(1.0, self.ly_variation, len(qcluster)))
+            for idx in range(len(qcluster)):
+                qcluster.qpt_v[idx][-1] *= var[idx]
         if self.posx_variation > 0:
-            var = abs(np.random.normal(1.0, self.posx_variation/qcluster.xsum(), len(qcluster)))
-            for idx in range(len(qcluster)): qcluster.qpt_v[idx][0] *= var[idx]
+            var = abs(self.rng.normal(1.0, self.posx_variation/qcluster.xsum(), len(qcluster)))
+            for idx in range(len(qcluster)):
+                qcluster.qpt_v[idx][0] *= var[idx]
 
         return qcluster
 
@@ -211,7 +212,7 @@ class DataGen():
             a flash instance 
         """
         qpt_v = qcluster
-        if type(qcluster) == type(QCluster()):
+        if isinstance(qcluster, QCluster):
             qpt_v = qcluster.qpt_v
 
         pe_v = self.flash_algo.fill_estimate(qpt_v)
@@ -219,9 +220,9 @@ class DataGen():
         # apply variation if needed
         var = np.ones(shape=(len(pe_v)),dtype=np.float32)
         if self.pe_variation>0.:
-            var = abs(np.random.normal(1.0, self.pe_variation,len(pe_v)))
+            var = abs(self.rng.normal(1.0, self.pe_variation,len(pe_v)))
         for idx in range(len(pe_v)):
-            estimate = float(int(np.random.poisson(pe_v[idx].item() * var[idx])))
+            estimate = float(int(self.rng.poisson(pe_v[idx].item() * var[idx])))
             pe_v[idx] = estimate
             pe_err_v.append(np.sqrt(estimate))
 
