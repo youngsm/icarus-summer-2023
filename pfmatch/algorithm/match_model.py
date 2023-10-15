@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
-from .match_modules import XShift, GenFlash, SirenFlash
+
+from pfmatch.algorithm.match_modules import GenFlash, SirenFlash, XShift
 
 class GradientModel(torch.nn.Module):
     """

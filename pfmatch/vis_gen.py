@@ -1,14 +1,15 @@
 ##### CURRENTLY NOT USED AND IS ALSO BUGGY#######
 
 
-from .plot import plot_qcluster
-from .data_gen import DataGen
+import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-import yaml
-import numpy as np
-from .points import scatter_points
 import torch
+import yaml
+
+from pfmatch.data_gen import DataGen
+from pfmatch.plot import plot_qcluster
+from pfmatch.points import scatter_points
 
 #gen = DataGen()
 #match_input = gen.make_flashmatch_inputs()

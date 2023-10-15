@@ -1,7 +1,9 @@
 import torch
 import yaml
-from ..photonlib.siren_library import SirenLibrary
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+from pfmatch.backend import device
+from pfmatch.photonlib.siren_library import SirenLibrary
+
 #TODO: MODIFY TO BE SIREN-COMPATIBLE
 
 class FlashAlgo():

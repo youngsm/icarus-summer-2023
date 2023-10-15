@@ -3,8 +3,8 @@ import numpy as np
 import copy
 import torch
 from scipy.optimize import linear_sum_assignment
-DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-#DEVICE = torch.device("cpu")
+
+from pfmatch.backend import device
 
 class FlashMatchInput:
     def __init__(self):
@@ -82,9 +82,9 @@ class FlashMatch:
 
 class Flash:
     def __init__(self, *args):
-        self.pe_v = torch.tensor([],device=DEVICE)
-        self.pe_err_v = torch.tensor([],device=DEVICE)
-        self.pe_true_v = torch.tensor([],device=DEVICE)
+        self.pe_v = torch.tensor([],device=device)
+        self.pe_err_v = torch.tensor([],device=device)
+        self.pe_true_v = torch.tensor([],device=device)
         self.idx = np.inf    # index from original larlite vector
         self.time = np.inf   # Flash timing, a candidate T0
         self.time_true = np.inf  # MCFlash timing
@@ -99,11 +99,11 @@ class Flash:
         return torch.sum(self.pe_v).item()
     
     def fill(self,pe_v):
-        self.pe_v = torch.tensor(pe_v,device=DEVICE)
+        self.pe_v = torch.tensor(pe_v,device=device)
 
 class QCluster:
     def __init__(self, *args):
-        self.qpt_v = torch.tensor([],device=DEVICE) #I THINK: vector of 3D points along track, along with photons "q" originating from each position
+        self.qpt_v = torch.tensor([],device=device) #I THINK: vector of 3D points along track, along with photons "q" originating from each position
         self.idx = np.inf # index from original larlite vector
         self.time = np.inf # assumed time w.r.t trigger for reconstruction
         self.time_true = np.inf # time from MCTrack information
@@ -148,7 +148,7 @@ class QCluster:
 
     # fill qcluster content from a qcluster_v list
     def fill(self, qpt_v):
-        self.qpt_v = torch.tensor(qpt_v, device=DEVICE)
+        self.qpt_v = torch.tensor(qpt_v, device=device)
 
     # drop points outside specified recording range
     def drop(self, x_min, x_max, y_min = -np.inf, y_max = np.inf, z_min = -np.inf, z_max = np.inf):

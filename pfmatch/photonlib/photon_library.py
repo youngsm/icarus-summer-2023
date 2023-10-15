@@ -1,9 +1,10 @@
-import h5py  as h5
-import numpy as np
 import os
+
+import h5py as h5
+import numpy as np
 import torch
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-#device = torch.device("cpu")
+
+from pfmatch.backend import device
 
 class PhotonLibrary(object):
     def __init__(self, fname='photon_library/plib_combined.h5', lut_file=None):

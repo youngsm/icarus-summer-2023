@@ -1,13 +1,14 @@
 # largely taken from ToyMC class in pytorch-flashmatch repo
 import numpy as np
-from .algorithm.lightpath import LightPath
-from .algorithm.flashalgo import FlashAlgo
-from .flashmatch_types import FlashMatchInput, Flash, QCluster
-from .plot import plot_qcluster
-import yaml
-#from .photonlib.photon_library import PhotonLibrary
-from .points import scatter_points
 import torch
+import yaml
+
+from pfmatch.algorithm.flashalgo import FlashAlgo
+from pfmatch.algorithm.lightpath import LightPath
+from pfmatch.flashmatch_types import Flash, FlashMatchInput, QCluster
+from pfmatch.plot import plot_qcluster
+#from .photonlib.photon_library import PhotonLibrary
+from pfmatch.points import scatter_points
 
 class DataGen():
     #TODO: Modify to work with photon library or siren input for visibility

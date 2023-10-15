@@ -1,10 +1,10 @@
 import torch
-from torch.autograd import grad
 import torch.nn as nn
-from .siren_modules import Siren
-from ..photonlib.siren_library import SirenLibrary
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-device_ids = list(range(torch.cuda.device_count()))
+from torch.autograd import grad
+
+from pfmatch.backend import device
+from pfmatch.photonlib.siren_library import SirenLibrary
+from pfmatch.algorithm.siren_modules import Siren
 
 class XShift(nn.Module):
     """

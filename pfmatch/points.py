@@ -1,6 +1,7 @@
 import plotly.graph_objs as go
 import torch
 
+
 def scatter_points(points, dim=3, markersize=5, color='orange', colorscale=None, opacity=0.8, hovertext=None, cmin=None, cmax=None):
     """
     Produces go.Scatter3d or go.Scatter object to be plotted in plotly

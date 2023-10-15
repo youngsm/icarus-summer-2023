@@ -1,7 +1,9 @@
 import numpy as np
-import yaml
-from ..flashmatch_types import QCluster
 import torch
+import yaml
+
+from pfmatch.flashmatch_types import QCluster
+
 
 class LightPath():
     def __init__(self, detector_specs, cfg_file=None):

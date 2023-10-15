@@ -1,13 +1,16 @@
-import yaml
 import itertools
-import torch
 import time
+
 import numpy as np
-from .data_gen import DataGen
-from .flashmatch_types import FlashMatch
-from .algorithm.flashalgo import FlashAlgo
-from .algorithm.match_model import GradientModel, PoissonMatchLoss, EarlyStopping
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+import torch
+import yaml
+
+from pfmatch.backend import device
+from pfmatch.algorithm.flashalgo import FlashAlgo
+from pfmatch.algorithm.match_model import EarlyStopping, GradientModel, PoissonMatchLoss
+from pfmatch.data_gen import DataGen
+from pfmatch.flashmatch_types import FlashMatch
+
 
 class Manager():
     def __init__(self, detector_cfg, flashmatch_cfg, photon_library=None):

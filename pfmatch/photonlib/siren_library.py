@@ -4,9 +4,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 import yaml
-from ..algorithm.siren_modules import Siren
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-device_ids = list(range(torch.cuda.device_count()))
+
+from pfmatch.backend import device, device_ids, map_location
+from pfmatch.algorithm.siren_modules import Siren
 
 class SirenLibrary(nn.Module):
     def __init__(self, cfg_file, in_features=3, hidden_features=512, hidden_layers=5, out_features=180, outermost_linear=False, omega=30):
@@ -18,8 +18,15 @@ class SirenLibrary(nn.Module):
         self.model = Siren(in_features, hidden_features, hidden_layers, out_features, outermost_linear, omega)
         self.model = self.model.float()
         self.model = torch.nn.DataParallel(self.model, device_ids=device_ids)
-        self.model.cuda()
-        checkpoint = torch.load(self.siren_path)
+        
+        if 'cuda' in device.type:
+          self.model.cuda()
+        elif 'mps' in device.type:
+          self.model.to(device)
+
+        # map_location dynamically remaps tensors from the type of device they were saved on
+        # to the type of device that is currently available. (e.g. from cuda:0 to mps)
+        checkpoint = torch.load(self.siren_path, map_location=map_location)
         state_dict = checkpoint['state_dict']
 
         #Making adjustments to state_dict to be compatible with model configured in this repo
@@ -27,22 +34,21 @@ class SirenLibrary(nn.Module):
 
         #Layers 0-5
         for i in range(0, 6):
-            state_dict['module.net.{}.linear.weight'.format(i)] = state_dict['siren.net.{}.linear.weight'.format(i)]
-            state_dict.pop('siren.net.{}.linear.weight'.format(i))
-            state_dict['module.net.{}.linear.bias'.format(i)] = state_dict['siren.net.{}.linear.bias'.format(i)]
-            state_dict.pop('siren.net.{}.linear.bias'.format(i))
+          state_dict[f'module.net.{i}.linear.weight'] = state_dict.pop(f'siren.net.{i}.linear.weight')
+          state_dict[f'module.net.{i}.linear.bias'] = state_dict.pop(f'siren.net.{i}.linear.bias')
 
         # for k in state_dict.keys():
         #     print(k)
         # print(self.model)
 
         #7th layer is different for some reason
-        state_dict['module.net.6.linear.weight'] = state_dict['siren.net.6.linear.weight']
-        state_dict.pop('siren.net.6.linear.weight')
-        state_dict['module.net.6.linear.bias'.format(i)] = state_dict['siren.net.6.linear.bias']
-        state_dict.pop('siren.net.6.linear.bias')
+        state_dict['module.net.6.linear.weight'] = state_dict.pop('siren.net.6.linear.weight')
+        state_dict['module.net.6.linear.bias'] = state_dict.pop('siren.net.6.linear.bias')
 
-        self.model.cuda()
+        if 'cuda' in device.type:
+          self.model.cuda()
+        elif 'mps' in device.type:
+          self.model.to(device)
 
         self.model.load_state_dict(state_dict)
         

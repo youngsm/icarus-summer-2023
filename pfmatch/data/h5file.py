@@ -1,6 +1,8 @@
 import h5py as h5
 import numpy as np
-from pfmatch.flashmatch_types import QCluster, Flash
+
+from pfmatch.flashmatch_types import Flash, QCluster
+
 
 class H5File(object):
     '''
@@ -202,30 +204,31 @@ def test_H5File():
         
     # Compare
     flag=True
-    if not len(input_data) == len(stored_data):
+    if len(input_data) != len(stored_data):
         print('Error: written v.s. read event count:', len(input_data),'!=',len(stored_data))
         flag=False
     for i in range(len(input_data)):
+
         qin,fin=input_data[i]
         qout,fout=stored_data[i]
         
-        if not len(qin) == len(qout):
+        if len(qin) != len(qout):
             print('Error: entry',i,'shape mismatch for QCluster',len(qin),'!=',len(qout))
             flag=False
             
-        if not len(fin) == len(fout):
+        if len(fin) != len(fout):
             print('Error: entry',i,'shape mismatch for Flash',len(fin),'!=',len(fout))
             flag=False
             
         qin_sum  = np.sum([qc.sum() for qc in qin ])
         qout_sum = np.sum([qc.sum() for qc in qout])
-        if not abs(qin_sum-qout_sum) < max(abs(qin_sum/1.e5),abs(qout_sum/1.e5)):
+        if abs(qin_sum-qout_sum) >= max(abs(qin_sum/1.e5),abs(qout_sum/1.e5)):
             print('Error: entry',i,'value sum mismatch for QCluster',qin_sum,'!=',qout_sum)
             flag=False
             
         fin_sum  = np.sum([f.sum() for f in fin ])
         fout_sum = np.sum([f.sum() for f in fout])
-        if not abs(fin_sum-fout_sum) < max(abs(fin_sum/1.e5),abs(fout_sum/1.e5)):
+        if abs(fin_sum-fout_sum) >= max(abs(fin_sum/1.e5),abs(fout_sum/1.e5)):
             print('Error: entry',i,'value sum mismatch for Flash',fin_sum,'!=',fout_sum)
             flag=False
             
