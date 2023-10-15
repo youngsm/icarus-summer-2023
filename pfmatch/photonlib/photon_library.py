@@ -43,7 +43,8 @@ class PhotonLibrary(object):
 
         return data
 
-    def DataTransform(self, data, eps=1e-5):
+    @staticmethod
+    def DataTransform(data, eps=1e-5):
         '''
         Transform vis data to log scale for training
         '''
@@ -51,7 +52,8 @@ class PhotonLibrary(object):
         v1 = np.log10(1.+eps)
         return (torch.log10(data+eps) - v0) / (v1 - v0)
 
-    def DataTransformInv(self, data, eps=1e-5):
+    @staticmethod
+    def DataTransformInv(data, eps=1e-5):
         '''
         Inverse log scale transform
         '''
