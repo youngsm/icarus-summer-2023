@@ -1,4 +1,3 @@
-import os
 from tempfile import NamedTemporaryFile
 from typing import List
 import numpy as np
@@ -6,6 +5,8 @@ import pytest
 
 from pfmatch.data.h5file import H5File
 from pfmatch.flashmatch_types import Flash, QCluster
+
+""" -------------------------------- helpers ------------------------------- """
 
 @pytest.fixture
 def rng():
@@ -54,6 +55,7 @@ def compare_len_sum(write: List[QCluster | Flash], read: List[QCluster | Flash])
     assert abs(w_sum-r_sum) < max(abs(w_sum/1.e5),abs(r_sum/1.e5)), \
             f'{clstype} value sum mismatch ({w_sum} != {r_sum})'
 
+""" --------------------------------- tests -------------------------------- """
 
 def test_h5_write_read_one(fake_data):
     (qcluster_v,flash_v) = fake_data[0]
