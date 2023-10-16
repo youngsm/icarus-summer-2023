@@ -66,8 +66,6 @@ class H5File(object):
         Read one event specified by the integer index
         '''
         qcluster_vv,flash_vv = self.read_many([idx])
-        if len(qcluster_vv)<1:
-            return (None, None)
         return (qcluster_vv[0],flash_vv[0])
             
     def read_many(self,idx_v):
