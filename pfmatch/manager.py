@@ -10,13 +10,14 @@ from pfmatch.algorithm.flashalgo import FlashAlgo
 from pfmatch.algorithm.match_model import EarlyStopping, GradientModel, PoissonMatchLoss
 from pfmatch.data_gen import DataGen
 from pfmatch.flashmatch_types import FlashMatch
+from pfmatch.photonlib import PhotonLibrary, SirenLibrary
 
 
 class Manager():
-    def __init__(self, detector_cfg, flashmatch_cfg, photon_library=None):
+    def __init__(self, detector_cfg: str, flashmatch_cfg: str, photon_library: PhotonLibrary | SirenLibrary = None):
         self.configure(detector_cfg,  flashmatch_cfg, photon_library)
 
-    def configure(self, detector_cfg, flashmatch_cfg, photon_library):
+    def configure(self, detector_cfg: str, flashmatch_cfg: str, photon_library: PhotonLibrary | SirenLibrary):
         config = yaml.load(open(flashmatch_cfg), Loader=yaml.Loader)['FlashMatchManager']
         self.detector_specs = yaml.load(open(detector_cfg), Loader=yaml.Loader)['DetectorSpecs']
         self.det_cfg = detector_cfg
@@ -117,7 +118,7 @@ class Manager():
 
         min_loss = np.inf
         for dx_0 in dx0_v:
-            loss, reco_x, reco_pe, duration = self.train(input, target, dx_0, dx_min, dx_max)
+            loss, reco_x, reco_pe, duration, _, _ = self.train(input, target, dx_0, dx_min, dx_max)
             if loss < min_loss:
                 min_loss = loss
                 res = [loss, reco_x, reco_pe, duration]
