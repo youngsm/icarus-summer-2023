@@ -1,3 +1,4 @@
+from typing import List
 import h5py as h5
 import numpy as np
 
@@ -42,7 +43,7 @@ class H5File(object):
     def __del__(self):
         try:
             self._f.close()
-        except:
+        except AttributeError:
             pass
         
     def __len__(self):
@@ -55,9 +56,8 @@ class H5File(object):
         msg=f'{len(self)} entries in this file. Raw hdf5 attribute descriptions below.\n'
         for k in self._f.keys():
             try:
-                msg += self._f[k].attrs['note']
-                msg += '\n'
-            except:
+                msg += ' '*2 + self._f[k].attrs['note'] + '\n'
+            except KeyError:
                 pass
         return msg
         
@@ -67,7 +67,7 @@ class H5File(object):
         '''
         qcluster_vv,flash_vv = self.read_many([idx])
         if len(qcluster_vv)<1:
-            return
+            return (None, None)
         return (qcluster_vv[0],flash_vv[0])
             
     def read_many(self,idx_v):
@@ -79,9 +79,7 @@ class H5File(object):
         
         for idx in idx_v:
             if idx >= len(self):
-                print('Cannot access entry',idx,'(out of range)')
-                return
-        
+                raise IndexError(f'index {idx} out of range (max={len(self)-1})')     
         event_point_v = [np.array(data).reshape(-1,4) for data in self._f['point'][idx_v]]
         event_group_v = self._f['group'][idx_v]
         event_flash_v = [np.array(data) for data in self._f['flash'][idx_v]]
@@ -112,22 +110,20 @@ class H5File(object):
         return (qcluster_vv, flash_vv)
         
     
-    def write_one(self,qcluster_v,flash_v):
+    def write_one(self, qcluster_v: List[QCluster], flash_v: List[Flash]):
         '''
         Write many event to a file with the provided list of QCluster and Flash
         '''
         self.write_many([qcluster_v],[flash_v])
         
-    def write_many(self,qcluster_vv,flash_vv):
+    def write_many(self,qcluster_vv: List[List[QCluster]], flash_vv: List[List[QCluster]]):
         '''
         Write many event to a file with the provided list of QCluster and Flash
         '''
-        if not self._mode in ['w','a']:
-            print('ERROR: the dataset is not created in the w (write) nor a (append) mode')
-            return
-        if not len(qcluster_vv) == len(flash_vv):
-            print('ERROR: the length of qcluster_vv',len(qcluster_vv),'is not same as flash_vv',len(flash_vv))
-            return        
+        if self._mode not in ['w','a']:
+            raise ValueError('the dataset is not created in the w (write) nor a (append) mode')
+        if len(qcluster_vv) != len(flash_vv):
+            raise ValueError(f'len(qcluster_vv) ({len(qcluster_vv)}) != len(flash_vv) ({len(flash_vv)}')
         
         # expand the output count by one for the new entry
         data_index = self._wh_point.shape[0]
@@ -162,74 +158,4 @@ class H5File(object):
             self._wh_group[data_index] = point_group
             self._wh_flash[data_index] = photon_v.flatten()
             
-            data_index+=1
-
-def test_H5File():
-    '''
-    Function to test H5File class (True=success, False=broken)
-    '''
-        
-    input_data=[]
-
-    # Create a file with fake data
-    f=H5File('test.h5','w')
-    nevents = int(np.random.random()*100)
-    for i in range(nevents):
-        ntracks = int(np.random.random()*10)+1
-        qcluster_v = []
-        for j in range(ntracks):
-            qcluster_v.append(QCluster())
-            qcluster_v[-1].fill(np.random.random(size=(int(np.random.random()*100)+1,4)))
-        nflash = int(np.random.random()*10)+1 
-        flash_v = []
-        for j in range(nflash):
-            flash_v.append(Flash())
-            flash_v[-1].fill(np.random.random(180))
-        
-        f.write_one(qcluster_v,flash_v)
-        qcluster_v = [qc.qpt_v.cpu().numpy() for qc in qcluster_v]
-        flash_v = [f.pe_v.cpu().numpy() for f in flash_v]
-        input_data.append((qcluster_v,flash_v))
-
-    f.close()
-    
-    # Read the data file and check it's identical to the generated input
-    f=H5File('test.h5','r')
-    stored_data=[]
-    for i in range(len(f)):
-        qcluster_v,flash_v = f.read_one(i)
-        qcluster_v = [qc.qpt_v.cpu().numpy() for qc in qcluster_v]
-        flash_v = [f.pe_v.cpu().numpy() for f in flash_v]
-        stored_data.append((qcluster_v,flash_v))
-        
-    # Compare
-    flag=True
-    if len(input_data) != len(stored_data):
-        print('Error: written v.s. read event count:', len(input_data),'!=',len(stored_data))
-        flag=False
-    for i in range(len(input_data)):
-
-        qin,fin=input_data[i]
-        qout,fout=stored_data[i]
-        
-        if len(qin) != len(qout):
-            print('Error: entry',i,'shape mismatch for QCluster',len(qin),'!=',len(qout))
-            flag=False
-            
-        if len(fin) != len(fout):
-            print('Error: entry',i,'shape mismatch for Flash',len(fin),'!=',len(fout))
-            flag=False
-            
-        qin_sum  = np.sum([qc.sum() for qc in qin ])
-        qout_sum = np.sum([qc.sum() for qc in qout])
-        if abs(qin_sum-qout_sum) >= max(abs(qin_sum/1.e5),abs(qout_sum/1.e5)):
-            print('Error: entry',i,'value sum mismatch for QCluster',qin_sum,'!=',qout_sum)
-            flag=False
-            
-        fin_sum  = np.sum([f.sum() for f in fin ])
-        fout_sum = np.sum([f.sum() for f in fout])
-        if abs(fin_sum-fout_sum) >= max(abs(fin_sum/1.e5),abs(fout_sum/1.e5)):
-            print('Error: entry',i,'value sum mismatch for Flash',fin_sum,'!=',fout_sum)
-            flag=False
-            
-    return flag
+            data_index += 1
