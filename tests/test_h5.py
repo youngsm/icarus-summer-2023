@@ -81,7 +81,7 @@ def test_h5_write_mode(fake_data):
 
     f.close()
     
-def test_h5_write_and_read(fake_data):
+def test_h5_write_read_many(fake_data):
     temp_file = writable_temp_file()
 
     f = H5File(temp_file,'w')
@@ -102,3 +102,67 @@ def test_h5_write_and_read(fake_data):
         pe_v_read = pe_vv_read[i]
         compare_len_sum(qcluster_v,qcluster_v_read)
         compare_len_sum(pe_v,pe_v_read)
+        
+def test_h5_write_shape_mismatch(fake_data):
+    temp_file = writable_temp_file()
+
+    f = H5File(temp_file,'w')
+    qcluster_vv = []
+    pe_vv = []
+    for i, (qcluster_v,flash_v) in enumerate(fake_data):
+        qcluster_vv.append(qcluster_v)
+        if i%2==0:
+            pe_vv.append(flash_v)
+    with pytest.raises(ValueError):
+        f.write_many(qcluster_vv,pe_vv)
+    f.close()
+    
+def test_h5_read_index(fake_data):
+    temp_file = writable_temp_file()
+
+    f = H5File(temp_file,'w')
+    qcluster_vv = []
+    pe_vv = []
+    for (qcluster_v,flash_v) in fake_data:
+        qcluster_vv.append(qcluster_v)
+        pe_vv.append(flash_v)
+    f.write_many(qcluster_vv,pe_vv)
+    f.close()
+    
+    f = H5File(temp_file,'r')
+    qc_read, fl_read = f[(len(f)//2)]
+    qc_write, fl_write = qcluster_vv[len(f)//2], pe_vv[len(f)//2]
+    for qc_r, qc_w, fl_read, fl_write in zip(qc_read,qc_write, fl_read, fl_write):
+        assert np.allclose(qc_r.qpt_v.cpu().numpy(),qc_w.qpt_v.cpu().numpy())
+        assert np.allclose(fl_read.pe_v.cpu().numpy(),fl_write.pe_v.cpu().numpy())
+    
+    with pytest.raises(IndexError):
+        f.read_one(len(f))
+    with pytest.raises(IndexError):
+        f.read_many([len(f)])
+    f.close()
+    
+def test_h5_read_after_close(fake_data):
+    temp_file = writable_temp_file()
+
+    f = H5File(temp_file,'w')
+    qcluster_vv = []
+    pe_vv = []
+    for (qcluster_v,flash_v) in fake_data:
+        qcluster_vv.append(qcluster_v)
+        pe_vv.append(flash_v)
+    f.write_many(qcluster_vv,pe_vv)
+    f.close()
+    
+    f = H5File(temp_file,'r')
+    f.close()
+    with pytest.raises(ValueError):
+        f.read_one(0)
+    f.close()
+    
+def test_h5_read_blank(fake_data):
+    temp_file = writable_temp_file()
+
+    f = H5File(temp_file,'w')
+    assert f.read_many([]) == ([], [])
+    f.close()
