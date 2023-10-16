@@ -29,9 +29,11 @@ def init_device():
         device_ids = list(range(torch.cuda.device_count()))    
         
     # Mac Metal (M1, M2, etc.)
-    elif torch.backends.mps.is_available():
-        device = torch.device("mps")
-        map_location = device
+    # NOTE: MPS DOESN'T SUPPORT FP64
+    
+    # elif torch.backends.mps.is_available():
+    #     device = torch.device("mps")
+    #     map_location = device
         
     # CPU
     else:
