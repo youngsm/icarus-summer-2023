@@ -61,6 +61,9 @@ class SirenLibrary(nn.Module):
         
         self.voxel_width = 5
 
+    def inv_transform(self, data, vmax=1, eps=1e-5, sin_out=False, lib=np):
+      print("This function is deprecated. Use DataTransformInv instead.")
+      return self.DataTransformInv(data, vmax, eps, sin_out, lib)
 
     def LoadData(self, transform=True, eps=1e-5):
         '''
