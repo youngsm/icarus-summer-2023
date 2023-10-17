@@ -5,36 +5,9 @@ import pytest
 
 from pfmatch.data.h5file import H5File
 from pfmatch.flashmatch_types import Flash, QCluster
+from tests.fixtures import fake_flashmatch_data, rng
 
 """ -------------------------------- helpers ------------------------------- """
-
-@pytest.fixture
-def rng():
-    return  np.random.default_rng(123)
-
-@pytest.fixture
-def fake_data(rng):
-    nevents = int(rng.random()*100)
-    out = []
-    for _ in range(nevents):
-        ntracks = int(rng.random()*10)+1
-        qcluster_v = []
-
-        for _ in range(ntracks):
-            qcluster_v.append(QCluster())
-            
-            qpt_v = rng.random(size=(int(rng.random()*100)+1,4))
-            qcluster_v[-1].fill(qpt_v)
-        nflash = int(rng.random()*10)+1 
-        flash_v = []
-        for _ in range(nflash):
-            flash_v.append(Flash())
-            
-            pe_v = rng.random(180)
-            flash_v[-1].fill(pe_v)
-            
-        out.append((qcluster_v,flash_v))
-    return out
 
 def writable_temp_file():
     return NamedTemporaryFile('w', delete=False).name
@@ -57,8 +30,8 @@ def compare_len_sum(write: List[QCluster | Flash], read: List[QCluster | Flash])
 
 """ --------------------------------- tests -------------------------------- """
 
-def test_h5_write_read_one(fake_data):
-    (qcluster_v,flash_v) = fake_data[0]
+def test_h5_write_read_one(fake_flashmatch_data):
+    (qcluster_v,flash_v) = fake_flashmatch_data[0]
 
     f = H5File(writable_temp_file(),'w')
     f.write_one(qcluster_v,flash_v)
@@ -69,8 +42,8 @@ def test_h5_write_read_one(fake_data):
 
     f.close()
 
-def test_h5_write_mode(fake_data):
-    (qcluster_v,flash_v) = fake_data[0]
+def test_h5_write_mode(fake_flashmatch_data):
+    (qcluster_v,flash_v) = fake_flashmatch_data[0]
 
     tmp_name = writable_temp_file()
     f = H5File(tmp_name,'w')
@@ -81,13 +54,13 @@ def test_h5_write_mode(fake_data):
 
     f.close()
     
-def test_h5_write_read_many(fake_data):
+def test_h5_write_read_many(fake_flashmatch_data):
     temp_file = writable_temp_file()
 
     f = H5File(temp_file,'w')
     qcluster_vv = []
     pe_vv = []
-    for (qcluster_v,flash_v) in fake_data:
+    for (qcluster_v,flash_v) in fake_flashmatch_data:
         qcluster_vv.append(qcluster_v)
         pe_vv.append(flash_v)
     f.write_many(qcluster_vv,pe_vv)
@@ -103,13 +76,13 @@ def test_h5_write_read_many(fake_data):
         compare_len_sum(qcluster_v,qcluster_v_read)
         compare_len_sum(pe_v,pe_v_read)
         
-def test_h5_write_shape_mismatch(fake_data):
+def test_h5_write_shape_mismatch(fake_flashmatch_data):
     temp_file = writable_temp_file()
 
     f = H5File(temp_file,'w')
     qcluster_vv = []
     pe_vv = []
-    for i, (qcluster_v,flash_v) in enumerate(fake_data):
+    for i, (qcluster_v,flash_v) in enumerate(fake_flashmatch_data):
         qcluster_vv.append(qcluster_v)
         if i%2==0:
             pe_vv.append(flash_v)
@@ -117,13 +90,13 @@ def test_h5_write_shape_mismatch(fake_data):
         f.write_many(qcluster_vv,pe_vv)
     f.close()
     
-def test_h5_read_index(fake_data):
+def test_h5_read_index(fake_flashmatch_data):
     temp_file = writable_temp_file()
 
     f = H5File(temp_file,'w')
     qcluster_vv = []
     pe_vv = []
-    for (qcluster_v,flash_v) in fake_data:
+    for (qcluster_v,flash_v) in fake_flashmatch_data:
         qcluster_vv.append(qcluster_v)
         pe_vv.append(flash_v)
     f.write_many(qcluster_vv,pe_vv)
@@ -142,13 +115,13 @@ def test_h5_read_index(fake_data):
         f.read_many([len(f)])
     f.close()
     
-def test_h5_read_after_close(fake_data):
+def test_h5_read_after_close(fake_flashmatch_data):
     temp_file = writable_temp_file()
 
     f = H5File(temp_file,'w')
     qcluster_vv = []
     pe_vv = []
-    for (qcluster_v,flash_v) in fake_data:
+    for (qcluster_v,flash_v) in fake_flashmatch_data:
         qcluster_vv.append(qcluster_v)
         pe_vv.append(flash_v)
     f.write_many(qcluster_vv,pe_vv)
@@ -160,7 +133,7 @@ def test_h5_read_after_close(fake_data):
         f.read_one(0)
     f.close()
     
-def test_h5_read_blank(fake_data):
+def test_h5_read_blank(fake_flashmatch_data):
     temp_file = writable_temp_file()
 
     f = H5File(temp_file,'w')
