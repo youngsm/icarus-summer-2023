@@ -116,3 +116,9 @@ def test_lightpath_fill_qcluster_from_track(rng, lightpath):
     # test track of 0 length
     with pytest.raises(ValueError):
         lightpath.make_qcluster_from_track([[0,0,0]])
+
+    # test track with two consecutive identical points
+    rand = rng.random()*1000 + 10
+    qc_dupe = lightpath.make_qcluster_from_track([[0,0,0],[0,0,rand], [0,0,rand]])
+    qc_nodupe = lightpath.make_qcluster_from_track([[0,0,0],[0,0,rand]])
+    assert np.allclose(qc_dupe.qpt_v, qc_nodupe.qpt_v), "expected duplicate points to be removed"
