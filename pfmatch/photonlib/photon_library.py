@@ -33,7 +33,7 @@ class PhotonLibrary(object):
                 self.bins = torch.tensor(f['bins'], dtype=torch.float32).to(device)
                 self.pmt_groups = torch.cat((torch.zeros(90), torch.ones(90))).to(device)
         
-    def LoadData(self, transform=True, eps=1e-5):
+    def LoadData(self, transform=True, eps=1e-5) -> torch.Tensor:
         '''
         Load photon library visibility data. Apply scale transform if specified
         '''
@@ -44,7 +44,7 @@ class PhotonLibrary(object):
         return data
 
     @staticmethod
-    def DataTransform(data, eps=1e-5):
+    def DataTransform(data: torch.Tensor, eps=1e-5) -> torch.Tensor:
         '''
         Transform vis data to log scale for training
         '''
@@ -53,7 +53,7 @@ class PhotonLibrary(object):
         return (torch.log10(data+eps) - v0) / (v1 - v0)
 
     @staticmethod
-    def DataTransformInv(data, eps=1e-5):
+    def DataTransformInv(data: torch.Tensor, eps=1e-5) -> torch.Tensor:
         '''
         Inverse log scale transform
         '''
@@ -69,7 +69,7 @@ class PhotonLibrary(object):
         
         return self.CoordFromVoxID(vox_ids, normalize=normalize)
 
-    def CoordFromVoxID(self, idx, normalize=True):
+    def CoordFromVoxID(self, idx: np.ndarray | int | torch.Tensor, normalize=True) -> torch.Tensor:
         '''
         Load input coord from vox id 
         '''
@@ -82,15 +82,15 @@ class PhotonLibrary(object):
         
         return pos_coord.squeeze()
 
-    def VisibilityFromAxisID(self, axis_id, ch=None):
+    def VisibilityFromAxisID(self, axis_id: torch.Tensor, ch=None) -> torch.Tensor:
         return self.Visibility(self.AxisID2VoxID(axis_id),ch)
 
-    def VisibilityFromXYZ(self, pos, ch=None):
+    def VisibilityFromXYZ(self, pos: torch.Tensor, ch: int = None) -> torch.Tensor:
         #if not torch.is_tensor(pos):
         #    pos = torch.tensor(pos, device=device)
         return self.Visibility(self.Position2VoxID(pos), ch)
 
-    def Visibility(self, vids, ch=None):
+    def Visibility(self, vids: torch.Tensor, ch: int = None) -> torch.Tensor:
         '''
         Returns a probability for a detector to observe a photon.
         If ch (=detector ID) is unspecified, returns an array of probability for all detectors
@@ -104,7 +104,7 @@ class PhotonLibrary(object):
             return self._vis[vids]
         return self._vis[vids][ch]
 
-    def AxisID2VoxID(self, axis_id):
+    def AxisID2VoxID(self, axis_id: torch.Tensor) -> int:
         '''
         Takes an integer ID for voxels along xyz axis (ix, iy, iz) and converts to a voxel ID
         INPUT
@@ -134,7 +134,7 @@ class PhotonLibrary(object):
         '''
         return torch.floor((pos - self._min) / (self._max - self._min) * self.shape)
 
-    def Position2VoxID(self, pos):
+    def Position2VoxID(self, pos: torch.Tensor) -> torch.Tensor:
         '''
         Takes a tensor of xyz position (x,y,z) and converts to a tensor of voxel IDs
         INPUT
@@ -146,7 +146,7 @@ class PhotonLibrary(object):
 
         return (axis_ids[:, 0] + axis_ids[:, 1] * self.shape[0] +  axis_ids[:, 2]*(self.shape[0] * self.shape[1])).long()
 
-    def VoxID2AxisID(self, vid):
+    def VoxID2AxisID(self, vid: torch.int) -> torch.Tensor:
         '''
         Takes a voxel ID and converts to discretized index along xyz axis
         INPUT
@@ -160,7 +160,7 @@ class PhotonLibrary(object):
         
         return torch.reshape(torch.stack([xid,yid,zid], -1), (-1, 3)).float()
 
-    def VoxID2Coord(self, vid):
+    def VoxID2Coord(self, vid: int) -> torch.Tensor:
         '''
         Takes a voxel ID and converts to normalized coordniate
         INPUT
@@ -172,7 +172,7 @@ class PhotonLibrary(object):
         
         return (axis_id + 0.5) / self.shape
 
-    def WeightFromPos(self, pos):
+    def WeightFromPos(self, pos: torch.Tensor) -> torch.Tensor:
         '''
           Weighting factor for data at pos based on the provided weight lut file
         '''
