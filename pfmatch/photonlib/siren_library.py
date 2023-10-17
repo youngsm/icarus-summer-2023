@@ -11,7 +11,14 @@ from pfmatch.algorithm.siren_modules import Siren
 class SirenLibrary(nn.Module):
     def __init__(self, cfg_file, in_features=3, hidden_features=512, hidden_layers=5, out_features=180, outermost_linear=False, omega=30):
         #config = yaml.load(open(cfg_file), Loader=yaml.Loader)["PhotonLibHypothesis"]
-        config = cfg_file["PhotonLibHypothesis"]
+        
+        if isinstance(cfg_file, dict):
+          config = cfg_file["PhotonLibHypothesis"]
+        elif isinstance(cfg_file, str):
+          config = yaml.load(open(cfg_file), Loader=yaml.Loader)["PhotonLibHypothesis"]
+        else:
+          raise RuntimeError("Config file type not recognized.")
+
         self.siren_path = config["SirenPath"]
 
         super().__init__()
