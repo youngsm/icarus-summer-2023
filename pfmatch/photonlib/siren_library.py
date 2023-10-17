@@ -100,7 +100,7 @@ class SirenLibrary(nn.Module):
         if not torch.is_tensor(pos):
             pos = torch.tensor(pos, device=device)
 
-        return self.inv_transform(self.model(pos)['model_out'],lib=torch)
+        return self.DataTransformInv(self.model(pos)['model_out'],lib=torch)
 
     def Visibility(self, vids, ch=None):
         '''
