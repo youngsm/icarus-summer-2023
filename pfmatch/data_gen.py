@@ -220,7 +220,7 @@ class DataGen():
         # apply variation if needed
         var = np.ones(shape=(len(pe_v)),dtype=np.float32)
         if self.pe_variation>0.:
-            var = abs(self.rng.normal(1.0, self.pe_variation,len(pe_v)))
+            var = abs(self.rng.normal(1.0, self.pe_variation, len(pe_v)))
         for idx in range(len(pe_v)):
             estimate = float(int(self.rng.poisson(pe_v[idx].item() * var[idx])))
             pe_v[idx] = estimate
