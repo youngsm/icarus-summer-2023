@@ -14,7 +14,7 @@ class LightPath():
             self.configure(cfg_file)
 
     def configure_from_yaml(self, cfg_file):
-        self.configure(yaml.load(open(cfg_file), Loader=yaml.Loader)["LightPath"])
+        self.configure(yaml.load(open(cfg_file), Loader=yaml.Loader))
         
     def configure(self,cfg):
         self.gap = cfg["LightPath"]["SegmentSize"]
@@ -31,9 +31,12 @@ class LightPath():
         Returns
         """
         norm_alg = np.linalg.norm
-        if type(pt1) == type(torch.tensor([])):
+        if isinstance(pt1, torch.Tensor):
             norm_alg = torch.linalg.norm
-            
+        elif not isinstance(pt1, np.ndarray):
+            pt1 = np.array(pt1)
+            pt2 = np.array(pt2)
+        
         qpt_v=[]
         
         dist = norm_alg(pt1 - pt2)
@@ -60,7 +63,7 @@ class LightPath():
 
         res.qpt_v = torch.concat([res.qpt_v,torch.tensor(qpt_v,device=res.qpt_v.device)])
         
-    def make_qcluster_from_track(self, track):
+    def make_qcluster_from_track(self, track: np.ndarray) -> QCluster:
         """
         Create a qcluster instance from a trajectory
         ---------
