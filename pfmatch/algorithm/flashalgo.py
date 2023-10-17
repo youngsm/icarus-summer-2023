@@ -2,29 +2,32 @@ import torch
 import yaml
 
 from pfmatch.backend import device
-from pfmatch.photonlib.siren_library import SirenLibrary
+from pfmatch.photonlib import SirenLibrary, PhotonLibrary
 
 #TODO: MODIFY TO BE SIREN-COMPATIBLE
 
 class FlashAlgo():
-    def __init__(self, detector_specs, photon_library, cfg_file):
+    def __init__(self, detector_specs: dict, photon_library: PhotonLibrary | SirenLibrary, cfg_file: dict = None):
         self.plib = photon_library #same photon library that was passed in DataGen, will be None unless user changes
 
         if not self.plib:
-          self.slib = SirenLibrary(cfg_file)
-          
+          if cfg_file:
+            self.slib = SirenLibrary(cfg_file)
+          else:
+            raise RuntimeError("Either config file or photon library must be specified.")
+
         self.global_qe = 0.0093
         self.reco_pe_calib = 1
         self.qe_v = []  # CCVCorrection factor array
         self.vol_min = torch.tensor(detector_specs["ActiveVolumeMin"], device=device)
         self.vol_max = torch.tensor(detector_specs["ActiveVolumeMax"], device=device)
-        if cfg_file:
+        if isinstance(cfg_file, dict):
           self.configure(cfg_file)
-        self.cfg_file = cfg_file
+        elif isinstance(cfg_file, str):
+          self.configure_from_yaml(cfg_file)
 
-    def configure_from_yaml(self, fmatch_yaml):
-        self.configure(yaml.load(open(self.cfg_file), Loader=yaml.Loader)["LightPath"])
-
+    def configure_from_yaml(self, cfg_file: str):
+        self.configure(yaml.load(open(cfg_file), Loader=yaml.Loader))
         
     def configure(self, fmatch_config):
         config = fmatch_config['PhotonLibHypothesis']
@@ -33,8 +36,7 @@ class FlashAlgo():
         self.qe_v = torch.tensor(config["CCVCorrection"], device=device)
         self.siren_path = config["SirenPath"]
         if not self.siren_path and not self.plib:
-          ("Must provide either a photon library file or Siren model path")
-          raise Exception
+          raise RuntimeError("PhotonLibrary path not specified in config file")
 
     def NormalizePosition(self, pos):
         '''
@@ -43,7 +45,6 @@ class FlashAlgo():
         #TODO
         if not self.plib:
            return pos / (self.vol_max - self.vol_min)
-           pass
         
         return ((self.plib.Position2AxisID(pos) + 0.5) / self.plib.shape - 0.5) * 2
 
@@ -54,11 +55,11 @@ class FlashAlgo():
         Arguments
           track: qcluster track of 3D position + charge
         -------
-        Returns
-          a hypothesis Flash object
+        Returns hypothesized number of p.e. to be detected in each PMT
+          
         """
-        #if not torch.is_tensor(track):
-        #  track = torch.tensor(track, device=device)
+        if not torch.is_tensor(track):
+          track = torch.tensor(track, device=device)
 
         #fill estimate
         if not self.plib:
@@ -87,7 +88,7 @@ class FlashAlgo():
           # neighbor_track[:, 0] += self.slib.voxel_width
 
           # grad = (self.slib.Visibility(neighbor_track) - self.slib.Visibility(track[:, :3])) / self.slib.voxel_width
-          pass
+          raise NotImplementedError
 
         else:
           vids = self.plib.Position2VoxID(track[:, :3])
