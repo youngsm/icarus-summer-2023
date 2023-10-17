@@ -73,6 +73,11 @@ class LightPath():
         Returns
           a qcluster instance
         """
+        if len(track) < 2:
+            raise ValueError('track must have at least 2 points')
+        if np.asarray(track).shape[1] != 3:
+            raise ValueError("track must be a list of 3D points")
+        
         res = QCluster()
         #qpt_v = []
         
