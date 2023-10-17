@@ -39,6 +39,9 @@ class FlashMatch:
         self.duration = self.duration[self.tpc_ids, self.flash_ids]
 
     def local_match(self):
+        """
+        Reconstructs each position & p.e. to be equal to the minimum loss position & p.e. for each qcluster.
+        """
         self.tpc_ids = np.arange(self.loss_matrix.shape[0])
         self.flash_ids = np.argmin(self.loss_matrix, axis = 1)
         self.loss_v = self.loss_matrix[self.tpc_ids, self.flash_ids]
@@ -65,7 +68,22 @@ class FlashMatch:
         self.reco_x_v = self.reco_x_matrix[self.tpc_ids, self.flash_ids]
         self.reco_pe_v = self.reco_pe_matrix[self.tpc_ids, self.flash_ids]
 
-    def filter_loss_matrix(self, loss_threshold):
+    def filter_loss_matrix(self, loss_threshold: float):
+        """
+        Filters the loss matrix by keeping all rows and columns that has at least
+        one element less than the loss threshold.
+
+        Args:
+        ---
+        loss_threshold (float): The minimum loss value to keep a row or column.
+
+        Returns:
+        ---
+        Tuple of three numpy arrays:
+            * row_filter: The indices of the rows to keep.
+            * col_filter: The indices of the columns to keep.
+            * filtered_loss_matrix: The filtered loss matrix.
+        """
         row_filter = []
         col_filter = []
         for i, row in enumerate(self.loss_matrix):
@@ -77,11 +95,16 @@ class FlashMatch:
             if np.min(col) <= loss_threshold:
                 col_filter.append(j)
 
-
         return np.array(row_filter), np.array(col_filter), self.loss_matrix[row_filter, :][:, col_filter]
 
 class Flash:
+    """
+    A single Flash contains a list of PE values (pe_v) and a list of PE error values (pe_err_v) for each PMT.
+    In ICARUS, there are 180 PMTs so pe_v and pe_err_v are both of shape (180,).
+    """
+    
     def __init__(self, *args):
+        # TODO: enforce size of pe_v to be # of pmts
         self.pe_v = torch.tensor([],device=device)
         self.pe_err_v = torch.tensor([],device=device)
         self.pe_true_v = torch.tensor([],device=device)
@@ -99,9 +122,20 @@ class Flash:
         return torch.sum(self.pe_v).item()
     
     def fill(self,pe_v):
-        self.pe_v = torch.tensor(pe_v,device=device)
+        if not isinstance(pe_v,torch.Tensor):
+            pe_v = torch.tensor(pe_v,device=device)
+            
+        self.pe_v = pe_v
+        
+    def __repr__(self):
+        return f"<Flash size={tuple(self.pe_v.shape)}>"
 
 class QCluster:
+    """
+    A single QCluster contains a list of 3D points (x,y,z) along a single track, along with photons "q" (q) originating from each position
+    in the form qpt_v = (x, y, z, q) with shape (N, 4) where N is the number of points along the track.
+    """
+    
     def __init__(self, *args):
         self.qpt_v = torch.tensor([],device=device) #I THINK: vector of 3D points along track, along with photons "q" originating from each position
         self.idx = np.inf # index from original larlite vector
@@ -148,6 +182,11 @@ class QCluster:
 
     # fill qcluster content from a qcluster_v list
     def fill(self, qpt_v):
+        if len(np.shape(qpt_v)) != 2 or np.shape(qpt_v)[1] != 4:
+            raise ValueError('qpt_v must be a 2D array with shape (N, 4)')
+        if isinstance(qpt_v, torch.Tensor):
+            self.qpt_v = qpt_v.to(device)
+            return
         self.qpt_v = torch.tensor(qpt_v, device=device)
 
     # drop points outside specified recording range
@@ -156,3 +195,6 @@ class QCluster:
             (self.qpt_v[:, 1] >= y_min) & (self.qpt_v[:, 1] <= y_max) & \
             (self.qpt_v[:, 2] >= z_min) & (self.qpt_v[:, 2] <= z_max)
         self.qpt_v = self.qpt_v[mask]
+
+    def __repr__(self):
+        return f"<QCluster size={tuple(self.qpt_v.shape)}>"
