@@ -41,7 +41,7 @@ cd icarus-summer-2023
 pytest tests/
 ```
 
-To write tests, create a new file in the `tests/` directory. Name the file something descriptive with a `test_` prefix. Then, write your tests using the pytest framework. A sample test file is shown below:
+To write tests, create a new file in the `tests/` directory. The directory follows the same structure as the package directory, so make sure to create the file in the correct subdirectory. For example, if you're testing a function in `pfmatch/algorithm`, create your file in `tests/algorithm`. Name the file something descriptive with a `test_` prefix. Then, write your tests using pytest. A sample test file is shown below:
 
 ```python
 from (...) import l2_norm
