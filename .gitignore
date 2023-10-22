@@ -8,3 +8,7 @@
 *.csv
 *_skbuild
 *egg-info
+*.DS_store
+.coverage
+*.lcov
+*.code-workspace
