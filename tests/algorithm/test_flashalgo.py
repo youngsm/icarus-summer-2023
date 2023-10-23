@@ -26,7 +26,7 @@ def detector_specs():
     
 @pytest.fixture
 def track():
-    return torch.tensor([[1, 100, 300, 23000],
+    return torch.tensor([[-60, 100, 300, 23000],
                          [-100, 0, 500, 18000],
                          [-300, -100, -500, 19000]], device=device, dtype=torch.float32)
     
@@ -169,8 +169,14 @@ def test_backward_gradient_shape(track, num_pmt, flashalgo_matrix):
         assert gradient.shape == (3, num_pmt), \
             f"Gradient shape mismatch for config (cfg={info[0]}, plib={info[1]})"
 
-def test_NormalizePosition_shape(track, flashalgo_matrix):
+def test_NormalizePosition(track, flashalgo_matrix):
     for flashalgo, info in flashalgo_matrix:
         normalized = flashalgo.NormalizePosition(track[:,:3])
+        
+        # test shape
         assert normalized.shape == track[:,:3].shape, \
             f"Normalized position shape mismatch for config (cfg={info[0]}, plib={info[1]})"
+            
+        # test normalization
+        assert (normalized >= -1).all() and (normalized <= 1).all(), \
+            f"Normalized position value mismatch for config (cfg={info[0]}, plib={info[1]})"
