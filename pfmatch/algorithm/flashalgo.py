@@ -9,22 +9,24 @@ from pfmatch.photonlib import SirenLibrary, PhotonLibrary
 class FlashAlgo():
     def __init__(self, detector_specs: dict, photon_library: PhotonLibrary | SirenLibrary, cfg_file: dict = None):
         self.plib = photon_library #same photon library that was passed in DataGen, will be None unless user changes
+        self.slib = None
 
-        if not self.plib:
-          if cfg_file:
-            self.slib = SirenLibrary(cfg_file)
-          else:
-            raise RuntimeError("Either config file or photon library must be specified.")
+        if not self.plib and not cfg_file:
+          raise RuntimeError("Photon library not provided.")
 
         self.global_qe = 0.0093
         self.reco_pe_calib = 1
         self.qe_v = []  # CCVCorrection factor array
         self.vol_min = torch.tensor(detector_specs["ActiveVolumeMin"], device=device)
         self.vol_max = torch.tensor(detector_specs["ActiveVolumeMax"], device=device)
+
         if isinstance(cfg_file, dict):
           self.configure(cfg_file)
         elif isinstance(cfg_file, str):
           self.configure_from_yaml(cfg_file)
+
+        if not self.slib and not self.plib:
+          raise RuntimeError("Photon library not provided.")
 
     def configure_from_yaml(self, cfg_file: str):
         self.configure(yaml.load(open(cfg_file), Loader=yaml.Loader))
@@ -34,9 +36,7 @@ class FlashAlgo():
         self.global_qe = config["GlobalQE"]
         self.reco_pe_calib = config["RecoPECalibFactor"]
         self.qe_v = torch.tensor(config["CCVCorrection"], device=device)
-        self.siren_path = config["SirenPath"]
-        if not self.siren_path and not self.plib:
-          raise RuntimeError("PhotonLibrary path not specified in config file")
+        self.slib = SirenLibrary(fmatch_config) if config["SirenPath"] else None   
 
     def NormalizePosition(self, pos):
         '''
