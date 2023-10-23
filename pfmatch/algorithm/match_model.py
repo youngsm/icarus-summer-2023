@@ -60,13 +60,14 @@ class EarlyStopping():
         self.best_loss = None
         self.early_stop = False
     def __call__(self, loss):
-        if self.best_loss == None:
+        if self.best_loss is None:
             self.best_loss = loss
+        elif self.best_loss < loss:
+            return
         elif self.best_loss - loss > self.min_delta:
             self.best_loss = loss
             self.counter = 0
         elif self.best_loss - loss < self.min_delta:
             self.counter += 1
             if self.counter >= self.patience:
-                # print('INFO: Early stopping')
                 self.early_stop = True
