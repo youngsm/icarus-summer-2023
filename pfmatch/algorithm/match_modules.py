@@ -56,14 +56,14 @@ class SirenFlash(nn.Module):
         ### OR ###
 
         print("Model from SirenFlash")
-        self.model = SirenLibrary(self.flash_algo.cfg_file)
+        self.model = flash_algo.slib
         ##SHOULD STILL VERIFY THIS WITH LossOptimizer.ipynb on batch
 
     def forward(self, input):
         print("forward in SirenFlash")
         coord = self.flash_algo.NormalizePosition(input[:, :3])
-        pred = self.model(coord)['model_out']
-        pred = torch.clip(self.flash_algo.plib.DataTransformInv(pred), 0.0, 1.0)
+        pred = self.model(coord)['model_out'].detach()
+        pred = torch.clip(self.flash_algo.slib.DataTransformInv(pred), 0.0, 1.0)
         local_pe_v = torch.sum(pred*(input[:, 3].unsqueeze(-1)), axis = 0)
         if len(self.flash_algo.qe_v) == 0:
             self.flash_algo.qe_v = torch.ones(local_pe_v.shape, device=device)
