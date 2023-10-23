@@ -2,10 +2,18 @@ import pytest
 import numpy as np
 
 from pfmatch.flashmatch_types import Flash, QCluster
+import torch
+
+GLOBAL_SEED = 123
 
 @pytest.fixture
 def rng():
-    return  np.random.default_rng(123)
+    return  np.random.default_rng(GLOBAL_SEED)
+
+@pytest.fixture
+def torch_rng():
+    return torch.Generator().manual_seed(GLOBAL_SEED)
+
 
 @pytest.fixture
 def fake_flashmatch_data(rng):
