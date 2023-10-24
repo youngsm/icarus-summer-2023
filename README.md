@@ -20,7 +20,7 @@ Name your branch something descriptive instead of something like `patch-1` or `d
 
 Before committing, make sure to test your changes to ensure you aren't breaking anything. See [Test running and writing](#Test-Running-and-Writing).
 
-If you're adding a new feature, make sure to add tests for it ([Test running and writing](#Test-Running-and-Writing)). If you're fixing a serious bug, make sure to add a test that would have caught the bug.
+If you're adding a new feature, make sure to add tests for it. If you're fixing a serious bug, make sure to add a test that would have caught the bug.
 
 Commit your changes once you're happy with them. Because multiple people work on the project, be sure to include a **descriptive** commit message that explains your changes, and to not include any files that aren't related to your change.
 
@@ -74,5 +74,6 @@ def test_l2_norm(rng):
 Note that all test functions need to start with `test_`. See the [pytest documentation](https://docs.pytest.org/en/latest/) for more information.
 
 ### Note:
-* if you are using random numbers like in the above example, import the `rng` generator from `tests.fixtures` to ensure that the tests are reproducible. Simply add `rng` as an argument to your test function and use it as you would a normal `np.random` generator. Pytest will automatically give it to your function. (A [fixture](https://docs.pytest.org/en/latest/fixture.html) is a fancy name for a function that runs before all the tests and returns a value that can be used as an argument in your tests.)
+* if you are using random numbers like in the above example, import the `rng` generator from `tests.fixtures` to ensure that the tests are reproducible. Add `rng` as an argument to your test function and use it as you would a normal `np.random` generator. Pytest will automatically give it to your function. We use this to ensure that all code that uses a pseudo-random number generator has the same seed, so as to make all tests reproducable. (A [fixture](https://docs.pytest.org/en/latest/fixture.html) is a fancy name for a function that runs before all the tests and returns a value that can be used as an argument in your tests.)
+* For random numbers in `pytorch`, import `torch_rng` from `tests.fixtures`, and use it as the `generator` argument to whatever random function you're using, i.e., `torch.rand(..., generator=torch_rng)`.
 * Avoid running direct comparisons between float numbers. Instead, use `np.allclose` to check if two arrays are close to each other. This is because of the way that floating point numbers are stored in memory. See [this](https://docs.python.org/3/tutorial/floatingpoint.html) for more information.
