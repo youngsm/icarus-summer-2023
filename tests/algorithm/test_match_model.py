@@ -6,13 +6,11 @@ from pfmatch.algorithm.match_model import GradientModel
 from pfmatch.algorithm.match_model import PoissonMatchLoss
 from pfmatch.algorithm.match_model import EarlyStopping
 from pfmatch.backend import device
-from tests.algorithm.test_flashalgo import config_dict, detector_specs, fake_photon_library, flashalgo_matrix, config_sirenpath
-from tests.fixtures import rng, torch_rng
-
-
-@pytest.fixture
-def num_pmt():
-    return 180
+# flashalgo_matrix reqs:
+from tests.fixtures import flashalgo_config_dict, detector_specs, fake_photon_library, config_sirenpath
+from tests.algorithm.test_flashalgo import flashalgo_matrix
+# rest of fixtures:
+from tests.fixtures import rng, torch_rng, num_pmt
 
 @pytest.fixture
 def randn(torch_rng):
