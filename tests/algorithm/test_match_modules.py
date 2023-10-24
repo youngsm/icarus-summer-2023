@@ -1,14 +1,22 @@
-from numpy import size
-import torch
 import pytest
-from pfmatch.algorithm.match_model import PoissonMatchLoss
-from pfmatch.algorithm.match_modules import SirenFlash, XShift, GenFlash
+import torch
+
+from pfmatch.algorithm.match_modules import GenFlash, SirenFlash, XShift
 from pfmatch.backend import device
-# flashalgo_matrix reqs:
-from tests.fixtures import flashalgo_config_dict, detector_specs, fake_photon_library, config_sirenpath
 from tests.algorithm.test_flashalgo import flashalgo_matrix
-# other fixtures:
-from tests.fixtures import rng, torch_rng, num_pmt
+
+from tests.fixtures import (
+    # flashalgo_matrix reqs:
+    config_sirenpath,
+    detector_specs,
+    fake_photon_library,
+    flashalgo_config_dict,
+    # other fixtures:
+    num_pmt,
+    rng,
+    torch_rng,
+)
+
 
 @pytest.fixture
 def randn(torch_rng):
