@@ -74,8 +74,10 @@ class PhotonLibrary(object):
         Load input coord from vox id 
         '''
         if np.isscalar(idx):
-            idx = np.array([idx])
-        
+            idx = torch.tensor([idx], device=device)
+        if not torch.is_tensor(idx):
+            idx = torch.tensor(idx, device=device)
+
         pos_coord = self.VoxID2Coord(idx)       
         if normalize:
             pos_coord = 2 * (pos_coord - 0.5)
@@ -102,7 +104,7 @@ class PhotonLibrary(object):
         '''
         if ch is None:
             return self._vis[vids]
-        return self._vis[vids][ch]
+        return self._vis[vids][:, ch]
 
     def AxisID2VoxID(self, axis_id: torch.Tensor) -> int:
         '''
@@ -112,7 +114,12 @@ class PhotonLibrary(object):
         RETURN
           The voxel ID (single integer)          
         '''
-        return axis_id[:, 0] + axis_id[:, 1]*self.shape[0] + axis_id[:, 2]*(self.shape[0] * self.shape[1])
+        if not torch.is_tensor(axis_id):
+            axis_id = torch.tensor(axis_id, device=device, dtype=torch.int)
+        if len(axis_id.shape) == 1:
+            axis_id = torch.reshape(axis_id, (-1, 3))
+
+        return (axis_id[:, 0] + axis_id[:, 1]*self.shape[0] + axis_id[:, 2]*(self.shape[0] * self.shape[1])).long()
 
     def AxisID2Position(self, axis_id):
         '''
@@ -122,6 +129,11 @@ class PhotonLibrary(object):
         RETURN
           Length 3 floating point array noting the position along xyz axis
         '''    
+        if not torch.is_tensor(axis_id):
+            axis_id = torch.tensor(axis_id, device=device, dtype=torch.int)
+        if len(axis_id.shape) == 1:
+            axis_id = torch.reshape(axis_id, (-1, 3))
+        
         return self._min + (self._max - self._min) / self.shape * (axis_id + 0.5)
 
     def Position2AxisID(self, pos):
@@ -130,9 +142,14 @@ class PhotonLibrary(object):
         INPUT
           pos - Tensor of length 3 floating point array noting the position along xyz axis
         RETURN
-          Tensor of sigle integer voxel IDs       
+          Length 3 integer array noting the position in discretized index along xyz axis
         '''
-        return torch.floor((pos - self._min) / (self._max - self._min) * self.shape)
+        if not torch.is_tensor(pos):
+            pos = torch.tensor(pos, device=device)
+        if len(pos.shape) == 1:
+            pos = torch.reshape(pos, (-1, 3))
+        
+        return (torch.floor((pos - self._min) / (self._max - self._min) * self.shape)).int()
 
     def Position2VoxID(self, pos: torch.Tensor) -> torch.Tensor:
         '''
@@ -142,9 +159,8 @@ class PhotonLibrary(object):
         RETURN
           Tensor of sigle integer voxel IDs       
         '''
-        axis_ids = ((pos - self._min) / (self._max - self._min) * self.shape).int()
-
-        return (axis_ids[:, 0] + axis_ids[:, 1] * self.shape[0] +  axis_ids[:, 2]*(self.shape[0] * self.shape[1])).long()
+        axis_ids = self.Position2AxisID(pos)
+        return self.AxisID2VoxID(axis_ids)
 
     def VoxID2AxisID(self, vid: torch.int) -> torch.Tensor:
         '''
@@ -166,7 +182,7 @@ class PhotonLibrary(object):
         INPUT
           vid - The voxel ID (single integer)          
         RETURN
-          Length 3 normalized coordinate array
+          Length 3 normalized coordinate array (to 0, 1)
         '''
         axis_id = self.VoxID2AxisID(vid)
         
